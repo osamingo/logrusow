@@ -1,0 +1,25 @@
+machine:
+  environment:
+    GOROOT: ${HOME}/go
+    PATH: ${GOROOT}/bin:${PATH}
+  post:
+    - wget https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz
+    - tar zxvf go1.5.1.linux-amd64.tar.gz
+    - go version
+
+dependencies:
+  override:
+    - go get github.com/Sirupsen/logrus
+
+test:
+  pre:
+    - go get golang.org/x/tools/cmd/vet
+    - go get golang.org/x/tools/cmd/cover
+    - go get github.com/golang/lint/golint
+    - go get github.com/stretchr/testify/assert
+  override:
+    - go vet ./...
+    - golint ./... | xargs -r false
+    - go test -coverprofile=coverage.txt -covermode=count ./...
+  post:
+    - bash <(curl -s https://codecov.io/bash)
