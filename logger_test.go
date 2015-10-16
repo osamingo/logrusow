@@ -8,80 +8,78 @@ import (
 	"testing"
 	"time"
 
+	"os/exec"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	al = &bytes.Buffer{}
-	el = &bytes.Buffer{}
-)
+const fatalEnvKey = "TEST_FATAL"
 
-func reset() {
-	al.Reset()
-	el.Reset()
-}
+var dummy = &bytes.Buffer{}
 
 func TestMain(m *testing.M) {
 
-	// set mock writers
-	appLogger.Out = al
-	errLogger.Out = el
+	logger.Out = dummy
+	logger.Level = logrus.DebugLevel
+	logger.Formatter = &logrus.JSONFormatter{}
+
+	if _, exist := os.LookupEnv(fatalEnvKey); exist {
+		Fatal("fatal test message", errors.New("dummy"))
+	}
 
 	os.Exit(m.Run())
 }
 
-func TestAddMetaInfo(t *testing.T) {
+func TestAddMetadata(t *testing.T) {
 
-	reset()
+	dummy.Reset()
 
 	k, v := "hoge", "fuga"
-	AddMetaInfo(logrus.Fields{k: v})
+	AddMetadata(logrus.Fields{k: v})
 
 	Info("test")
 	time.Sleep(time.Millisecond)
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 	assert.Equal(t, v, m[k])
 }
 
-func TestSetAppLogger(t *testing.T) {
+func TestSetLogger(t *testing.T) {
 
-	tmp := appLogger
-	assert.Equal(t, logrus.DebugLevel, appLogger.Level)
+	tmp := logger
+	assert.Equal(t, logrus.DebugLevel, logger.Level)
 
-	SetAppLogger(&logrus.Logger{Level: logrus.InfoLevel})
-	assert.Equal(t, logrus.InfoLevel, appLogger.Level)
+	SetLogger(&logrus.Logger{Level: logrus.InfoLevel})
+	assert.Equal(t, logrus.InfoLevel, logger.Level)
 
-	SetAppLogger(tmp)
-	assert.Equal(t, logrus.DebugLevel, appLogger.Level)
+	SetLogger(tmp)
+	assert.Equal(t, logrus.DebugLevel, logger.Level)
 }
 
-func TestSetErrLogger(t *testing.T) {
+func TestAddHooks(t *testing.T) {
 
-	tmp := errLogger
-	assert.Equal(t, logrus.ErrorLevel, errLogger.Level)
+	AddHooks()
+	assert.Empty(t, logger.Hooks)
 
-	SetErrLogger(&logrus.Logger{Level: logrus.InfoLevel})
-	assert.Equal(t, logrus.InfoLevel, errLogger.Level)
-
-	SetErrLogger(tmp)
-	assert.Equal(t, logrus.ErrorLevel, errLogger.Level)
+	h := &TestHook{}
+	AddHooks(h)
+	assert.Equal(t, len(h.Levels()), len(logger.Hooks))
 }
 
 func TestDebug(t *testing.T) {
 
 	// only message
 
-	reset()
+	dummy.Reset()
 
 	msg := "debug test message"
 	Debug(msg)
 	time.Sleep(time.Millisecond)
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.DebugLevel.String(), m["level"])
@@ -89,14 +87,14 @@ func TestDebug(t *testing.T) {
 
 	// with fields
 
-	reset()
+	dummy.Reset()
 
 	id := "vytxeTZskVKR7C7WgdSP3d"
 	Debug(msg, logrus.Fields{"id": id})
 	time.Sleep(time.Millisecond)
 
 	m = map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.DebugLevel.String(), m["level"])
@@ -107,14 +105,14 @@ func TestInfo(t *testing.T) {
 
 	// only message
 
-	reset()
+	dummy.Reset()
 
 	msg := "info test message"
 	Info(msg)
 	time.Sleep(time.Millisecond)
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.InfoLevel.String(), m["level"])
@@ -122,14 +120,14 @@ func TestInfo(t *testing.T) {
 
 	// with fields
 
-	reset()
+	dummy.Reset()
 
 	id := "vytxeTZskVKR7C7WgdSP3d"
 	Info(msg, logrus.Fields{"id": id})
 	time.Sleep(time.Millisecond)
 
 	m = map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.InfoLevel.String(), m["level"])
@@ -140,14 +138,14 @@ func TestWarn(t *testing.T) {
 
 	// only message
 
-	reset()
+	dummy.Reset()
 
 	msg := "warn test message"
 	Warn(msg)
 	time.Sleep(time.Millisecond)
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.WarnLevel.String(), m["level"])
@@ -155,14 +153,14 @@ func TestWarn(t *testing.T) {
 
 	// with fields
 
-	reset()
+	dummy.Reset()
 
 	id := "vytxeTZskVKR7C7WgdSP3d"
 	Warn(msg, logrus.Fields{"id": id})
 	time.Sleep(time.Millisecond)
 
 	m = map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(al).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.WarnLevel.String(), m["level"])
@@ -173,7 +171,7 @@ func TestError(t *testing.T) {
 
 	// only message
 
-	reset()
+	dummy.Reset()
 
 	msg := "error test message"
 	err := errors.New("dummy")
@@ -181,7 +179,7 @@ func TestError(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(el).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.ErrorLevel.String(), m["level"])
@@ -190,14 +188,14 @@ func TestError(t *testing.T) {
 
 	// with fields
 
-	reset()
+	dummy.Reset()
 
 	id := "vytxeTZskVKR7C7WgdSP3d"
 	Error(msg, err, logrus.Fields{"id": id})
 	time.Sleep(time.Millisecond)
 
 	m = map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(el).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.ErrorLevel.String(), m["level"])
@@ -205,18 +203,25 @@ func TestError(t *testing.T) {
 	assert.Equal(t, id, m["id"])
 }
 
+func TestFatal(t *testing.T) {
+
+	cmd := exec.Command(os.Args[0])
+	cmd.Env = append(os.Environ(), fatalEnvKey+"=1")
+	assert.Error(t, cmd.Run())
+}
+
 func TestPanic(t *testing.T) {
 
 	// only message
 
-	reset()
+	dummy.Reset()
 
 	msg := "panic test message"
 	err := errors.New("dummy")
 	assert.Panics(t, func() { Panic(msg, err) })
 
 	m := map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(el).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.PanicLevel.String(), m["level"])
@@ -225,16 +230,36 @@ func TestPanic(t *testing.T) {
 
 	// with fields
 
-	reset()
+	dummy.Reset()
 
 	id := "vytxeTZskVKR7C7WgdSP3d"
 	assert.Panics(t, func() { Panic(msg, err, logrus.Fields{"id": id}) })
 
 	m = map[string]interface{}{}
-	assert.NoError(t, json.NewDecoder(el).Decode(&m))
+	assert.NoError(t, json.NewDecoder(dummy).Decode(&m))
 
 	assert.Equal(t, msg, m["msg"])
 	assert.Equal(t, logrus.PanicLevel.String(), m["level"])
 	assert.Equal(t, err.Error(), m[logrus.ErrorKey])
 	assert.Equal(t, id, m["id"])
+}
+
+type TestHook struct {
+	Fired bool
+}
+
+func (hook *TestHook) Fire(entry *logrus.Entry) error {
+	hook.Fired = true
+	return nil
+}
+
+func (hook *TestHook) Levels() []logrus.Level {
+	return []logrus.Level{
+		logrus.DebugLevel,
+		logrus.InfoLevel,
+		logrus.WarnLevel,
+		logrus.ErrorLevel,
+		logrus.FatalLevel,
+		logrus.PanicLevel,
+	}
 }
