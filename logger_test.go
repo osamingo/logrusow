@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	logger.Level = logrus.DebugLevel
 	logger.Formatter = &logrus.JSONFormatter{}
 
-	if _, exist := os.LookupEnv(fatalEnvKey); exist {
+	if v := os.Getenv(fatalEnvKey); v != "" {
 		Fatal("fatal test message", errors.New("dummy"))
 	}
 
