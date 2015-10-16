@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
-
-	"os/exec"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
