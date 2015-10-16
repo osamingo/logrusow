@@ -13,13 +13,11 @@ dependencies:
 
 test:
   pre:
-    - go get golang.org/x/tools/cmd/vet
     - go get golang.org/x/tools/cmd/cover
-    - go get github.com/golang/lint/golint
+    - go get github.com/osamingo/gochic
     - go get github.com/stretchr/testify/assert
   override:
-    - go vet ./...
-    - golint ./... | xargs -r false
+    - gochic ./...
     - go test -coverprofile=coverage.txt -covermode=count ./...
   post:
     - bash <(curl -s https://codecov.io/bash)
