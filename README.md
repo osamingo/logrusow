@@ -2,6 +2,7 @@
 
 [![CircleCI](https://img.shields.io/circleci/project/osamingo/logrusow/master.svg?style=flat)](https://circleci.com/gh/osamingo/logrusow/tree/master)
 [![CodeCov](https://img.shields.io/codecov/c/github/osamingo/logrusow/master.svg?style=flat)](http://codecov.io/github/osamingo/logrusow?branch=master)
+[![Go Report Card](http://goreportcard.com/badge/osamingo/logrusow)](http://goreportcard.com/report/osamingo/logrusow)
 
 ## TL;DR
 
